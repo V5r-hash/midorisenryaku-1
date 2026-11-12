@@ -1,0 +1,506 @@
+<html lang="ja"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>堺市 みんなの農業ひろば（直送・配達）</title>
+<!--
+  設定は元のファイルと同じです。
+  ・Supabase：kv_store テーブルと RLS ポリシー、管理者設定（元のSQLをそのまま使えます）
+  ・Cloudinary：Unsigned の Upload preset
+  このファイルで使うデータのキー：sakai_crops（作物）, sakai_jobs（配達）
+-->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  window.SAKAI_SUPABASE_CONFIG = {
+    url: "https://fmbaubmhnugoxnbqsqxo.supabase.co",
+    key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYmF1Ym1obnVnb3huYnFzcXhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzNzE0NjYsImV4cCI6MjEwNjk0NzQ2Nn0.wK-4OKFnl2v71G1B7oL-y-H5UA15rcjl5TPXhZ9SPLQ"
+  };
+  window.SAKAI_CLOUDINARY_CONFIG = { cloudName: "fk8ffodd", uploadPreset: "SALACS" };
+</script>
+<style>
+:root{--soil:#5B4230;--soil-dark:#3E2C1F;--leaf:#3F7A4E;--leaf-dark:#2C5A38;--sand:#FBF6EA;--sand-deep:#F1E8D4;--sun:#E3A335;--sun-dark:#C6841C;--ink:#2B2620;--line:#E1D5B8;--white:#fff;--danger:#B4472B}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Hiragino Maru Gothic ProN","BIZ UDPGothic","Yu Gothic",sans-serif;background:var(--sand);color:var(--ink);line-height:1.7;font-size:17px;padding-bottom:40px}
+h1,h2,h3{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;margin:0 0 8px;color:var(--soil-dark)}
+header.top{background:linear-gradient(135deg,var(--leaf),var(--leaf-dark));color:#fff;padding:18px 16px 20px}
+header.top h1{color:#fff;font-size:24px;margin:2px 0 0}
+.eyebrow{font-size:13px;opacity:.85}
+.userbar{margin-top:10px;font-size:15px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.userbar .name{background:rgba(255,255,255,.18);padding:6px 14px;border-radius:20px}
+.userbar button{background:var(--sun);border:none;color:var(--soil-dark);padding:6px 12px;border-radius:20px;font-weight:bold}
+#authScreen{min-height:100vh;display:none;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--leaf),var(--leaf-dark));padding:24px 16px}
+.auth-wrap{width:100%;max-width:420px}
+.auth-wrap h1,.auth-wrap .eyebrow{color:#fff;text-align:center}
+.layout{display:flex;align-items:flex-start;max-width:720px;margin:0 auto}
+nav.tabs{flex:0 0 78px;display:flex;flex-direction:column;gap:6px;background:var(--sand-deep);padding:10px 6px;position:sticky;top:0;border-right:2px solid var(--line);min-height:100vh}
+nav.tabs button{border:2px solid transparent;background:#fff;color:var(--soil-dark);padding:10px 4px;border-radius:12px;font-size:12.5px;font-weight:bold;cursor:pointer;word-break:keep-all}
+nav.tabs button.active{background:var(--leaf);color:#fff;border-color:var(--leaf-dark)}
+main{flex:1;min-width:0;padding:16px 12px}
+section.view{display:none}section.view.active{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.btn{display:inline-block;background:var(--leaf);color:#fff;border:none;padding:12px 18px;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer}
+.btn.wide{width:100%}.btn.sun{background:var(--sun);color:var(--soil-dark)}
+.btn.outline{background:#fff;color:var(--leaf-dark);border:2px solid var(--leaf)}
+.btn.small{padding:6px 12px;font-size:14px;border-radius:10px}.btn.danger{background:var(--danger)}.btn:disabled{opacity:.5}
+label{display:block;font-weight:bold;margin:12px 0 4px;font-size:15px;color:var(--soil-dark)}
+input[type=text],input[type=number],select,textarea{width:100%;padding:11px;border:2px solid var(--line);border-radius:10px;font-size:16px;font-family:inherit;background:#fff;color:var(--ink)}
+textarea{min-height:90px}
+.hint{font-size:13px;color:#7A6B52;margin-top:2px}
+.pill{display:inline-block;font-size:12px;padding:3px 10px;border-radius:20px;background:var(--sand-deep);color:var(--soil-dark);font-weight:bold;margin-right:6px}
+.pill.g{background:#E7F0E9;color:var(--leaf-dark)}.pill.o{background:#FCE9D8;color:var(--sun-dark)}.pill.r{background:#FCEAE6;color:var(--danger)}
+.meta{font-size:13px;color:#8A7C63;margin-top:6px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.fee{font-size:20px;font-weight:bold;color:var(--sun-dark)}
+.crop-img{max-width:100%;border-radius:12px;margin-top:8px;display:block;border:1px solid var(--line)}
+.notice{font-size:13px;background:#FFF6E5;border:1px solid #F0DDA6;color:#7A5A12;padding:10px 12px;border-radius:10px;margin-bottom:14px}
+.notice.err{background:#FCEAE6;border-color:#E7B8AC;color:#7A2E1A}
+.type-choice{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.type-choice button{flex:1;min-width:90px;padding:12px;border-radius:12px;border:2px solid var(--line);background:#fff;font-size:15px;font-weight:bold;cursor:pointer;color:var(--soil)}
+.type-choice button.sel{border-color:var(--leaf);background:#E7F0E9;color:var(--leaf-dark)}
+.empty{text-align:center;color:#8A7C63;padding:30px 10px}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(40,30,15,.5);z-index:100;align-items:flex-end;justify-content:center}
+.modal-bg.active{display:flex}
+.modal{background:var(--sand);width:100%;max-width:720px;max-height:88vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:20px}
+.modal h2{display:flex;justify-content:space-between;align-items:center}
+.close-x{background:none;border:none;font-size:26px;color:var(--soil);cursor:pointer}
+.link-btn{background:none;border:none;padding:0;font:inherit;color:var(--leaf-dark);font-weight:bold;text-decoration:underline;cursor:pointer}
+.steps{display:flex;gap:4px;margin:8px 0}.steps span{flex:1;height:6px;border-radius:3px;background:var(--line)}.steps span.on{background:var(--leaf)}
+</style>
+</head>
+<body>
+
+<div id="authScreen" style="display: none;">
+  <div class="auth-wrap">
+    <div class="eyebrow">大阪府 堺市</div>
+    <h1>みんなの農業ひろば</h1>
+    <div class="card" style="margin-top:16px">
+      <div class="type-choice">
+        <button type="button" id="authTabLogin" class="sel">ログイン</button>
+        <button type="button" id="authTabSignup">新規登録</button>
+      </div>
+      <div id="signupFields" style="display:none">
+        <label>表示する名前</label><input type="text" id="authName" placeholder="例：〇〇農園、〇〇食堂">
+        <label>あなたの立場</label>
+        <div class="type-choice" id="roleChoice">
+          <button type="button" data-r="farmer" class="sel">農家<br><small>作物を出す</small></button>
+          <button type="button" data-r="restaurant">飲食店<br><small>作物を買う</small></button>
+          <button type="button" data-r="driver">配達員<br><small>運ぶ</small></button>
+        </div>
+      </div>
+      <label>メールアドレス</label><input type="text" id="authEmail" placeholder="example@mail.com">
+      <label>パスワード（6文字以上）</label><input type="password" id="authPassword">
+      <div id="termsField" style="display:none;margin-top:12px">
+        <label style="display:flex;gap:8px;font-weight:normal"><input type="checkbox" id="authTerms" style="width:20px;height:20px"><span><button type="button" class="link-btn" id="openTerms">利用規約</button> に同意します</span></label>
+      </div>
+      <div id="authError"></div>
+      <button class="btn wide sun" id="authSubmit" style="margin-top:12px">ログインする</button>
+      <p class="hint">新規登録では確認メールが届くことがあります。</p>
+      <button class="btn wide outline" id="authBack" style="margin-top:10px">登録せずに閲覧に戻る</button>
+    </div>
+  </div>
+</div>
+
+<div id="appRoot" style="">
+<header class="top">
+  <div class="eyebrow">大阪府 堺市</div>
+  <h1>みんなの農業ひろば</h1>
+  <div class="userbar"><span class="name" id="userName">ようこそ、ゲストさん</span><button id="loginBtn" style="">ログイン</button></div>
+</header>
+<div id="modeBanner"></div>
+<div class="layout">
+<nav class="tabs" id="tabs">
+  <button data-view="crops" class="active">作物</button>
+  <button data-view="jobs">配達</button>
+  <button data-view="mypage">マイページ</button>
+</nav>
+<main>
+
+<section class="view active" id="view-crops">
+  <div class="card" id="cropPostCard" style="display:none"><button class="btn wide sun" id="openCropModal">＋ 作物を登録する</button></div>
+  <div class="card"><input type="text" id="cropSearch" placeholder="作物をさがす（名前・農家・場所）"></div>
+  <div id="cropList"><div class="card">
+      <span class="pill g">農家</span><span class="pill">残り 20Kg</span>
+      <h3>きゅうり</h3>
+      <div></div>
+      
+      <div class="meta">集荷場所：堺市x区（4:00～16:00）／農家：管理者さん・11/12 23:01</div>
+      <div class="row">
+        <button class="btn small sun" data-order="mwdm9dejed6k3">注文する（飲食店）</button>
+        
+      </div></div></div>
+</section>
+
+<section class="view" id="view-jobs">
+  <div class="notice">配達員が受け取るのは<b>配達料だけ</b>です（飲食店から受け取ります）。作物の代金は、農家と飲食店のあいだで精算します。</div>
+  <div id="jobsLogin" class="card" style=""><p class="hint">配達の確認にはログインが必要です。</p><button class="btn wide sun" id="jobsGoLogin">ログイン・新規登録</button></div>
+  <div id="jobsBody"></div>
+</section>
+
+<section class="view" id="view-mypage">
+  <div class="card" id="myLogin" style=""><p class="hint">登録・注文・配達にはログインが必要です。閲覧だけなら不要です。</p><button class="btn wide sun" id="myGoLogin">ログイン・新規登録</button></div>
+  <div id="myBody" style="display:none">
+    <div class="card">
+      <h3><span id="myName"></span>さん <span class="pill g" id="myRole"></span></h3>
+      <label>表示する名前</label><input type="text" id="myNameInput">
+      <button class="btn wide" id="myNameSave" style="margin-top:10px">この名前に変更する</button>
+      <button class="btn wide outline" id="logoutBtn" style="margin-top:10px">ログアウト</button>
+      <button class="btn wide outline" id="myTerms" style="margin-top:10px">利用規約を見る</button>
+    </div>
+    <div class="card" id="myStats"></div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<!-- 作物登録 -->
+<div class="modal-bg" id="cropModal"><div class="modal">
+  <h2>作物を登録する <button class="close-x" data-close="cropModal">×</button></h2>
+  <label>作物の名前</label><input type="text" id="cName" placeholder="例：水なす">
+  <div style="display:flex;gap:8px">
+    <div style="flex:1"><label>数量</label><input type="number" id="cQty" min="1" placeholder="20"></div>
+    <div style="flex:1"><label>単位</label><input type="text" id="cUnit" placeholder="kg・個・袋"></div>
+  </div>
+  <label>集荷できる場所（配達員が取りに行く所）</label><input type="text" id="cPlace" placeholder="例：堺市南区〇〇町1-2 畑の脇の直売所">
+  <label>集荷できる時間帯</label><input type="text" id="cTime" placeholder="例：毎朝6〜8時">
+  <label>連絡先（電話など）</label><input type="text" id="cContact" placeholder="090-xxxx-xxxx">
+  <label>一言（あれば）</label><textarea id="cNote" placeholder="例：朝採れです。無農薬で育てました。"></textarea>
+  <label>写真（1枚・あれば）</label><input type="file" id="cImg" accept="image/*">
+  <div id="cImgPrev"></div>
+  <button class="btn wide sun" id="cSubmit" style="margin-top:12px">登録する</button>
+</div></div>
+
+<!-- 注文 -->
+<div class="modal-bg" id="orderModal"><div class="modal">
+  <h2>この作物を注文する <button class="close-x" data-close="orderModal">×</button></h2>
+  <div id="oInfo" class="hint"></div>
+  <label>数量</label><input type="number" id="oQty" min="1" value="1">
+  <label>届け先の住所（お店）</label><input type="text" id="oAddr" placeholder="例：堺市堺区〇〇町1-2-3">
+  <label>お店の連絡先</label><input type="text" id="oContact" placeholder="072-xxx-xxxx">
+  <label>配達員への配達料（円）</label><input type="number" id="oFee" min="0" step="50" placeholder="例：800">
+  <p class="hint">配達料は、配達員に直接お支払いください。作物の代金は農家に別途お支払いください。</p>
+  <label>備考（あれば）</label><textarea id="oNote" placeholder="希望の到着時間など"></textarea>
+  <button class="btn wide sun" id="oSubmit" style="margin-top:12px">配達員を募集して注文する</button>
+</div></div>
+
+<!-- 利用規約 -->
+<div class="modal-bg" id="termsModal"><div class="modal">
+  <h2>利用規約 <button class="close-x" data-close="termsModal">×</button></h2>
+  <div style="font-size:14px;line-height:1.9">
+    <p>本サービスは、堺市周辺の農家・飲食店・配達員が、作物の登録・注文・配達の連絡を行う場を無償で提供するものです。</p>
+    <p><b>第1条</b> 作物の代金の精算は農家と飲食店の間で、配達料の支払いは飲食店と配達員の間で行います。運営者は代金・配達料の支払い、品質、配達中の事故・紛争・損害について、法令上許される最大限の範囲で一切責任を負いません。</p>
+    <p><b>第2条</b> 利用者は自己の責任で本サービスを利用し、利用者間のトラブルは当事者間で解決するものとします。</p>
+    <p><b>第3条</b> 法令・公序良俗に反する行為、虚偽の情報の登録、運営を妨げる行為を禁止します。</p>
+    <p><b>第4条</b> 運営者は、事前の通知なく、登録内容の削除、利用停止、本サービスの変更・中断・終了、本規約の変更ができるものとします。</p>
+    <p><b>第5条</b> 本規約は日本法に準拠し、紛争は運営者の所在地を管轄する裁判所を専属的合意管轄とします。</p>
+  </div>
+  <button class="btn wide" data-close="termsModal" style="margin-top:16px">閉じる</button>
+</div></div>
+
+<script>
+(function(){
+"use strict";
+let sb=null, authUser=null, profile={username:null,role:null}, crops=[], jobs=[];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const fmt=ts=>{const d=new Date(ts);return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
+const ROLES={farmer:'農家',restaurant:'飲食店',driver:'配達員'};
+const STATUS={open:['配達員を募集中','o'],accepted:['配達員が決まりました','g'],picked:['集荷済み・配達中','g'],delivered:['配達完了','g']};
+
+// ---- ストレージ（共有データはSupabase） ----
+async function sGet(key){
+  if(!sb) return JSON.parse(localStorage.getItem('sakai_local_'+key)||'null');
+  try{const {data,error}=await sb.from('kv_store').select('value').eq('key',key).maybeSingle();if(error)throw error;return data?data.value:null}
+  catch(e){console.warn(e);return null}
+}
+async function sSet(key,val){
+  if(!sb){localStorage.setItem('sakai_local_'+key,JSON.stringify(val));return true}
+  try{const {error}=await sb.from('kv_store').upsert({key,value:val});if(error)throw error;return true}
+  catch(e){console.warn(e);alert('保存に失敗しました。通信状況を確認してもう一度お試しください。');return false}
+}
+// 最新を読み直してから書き換える（他の人の更新を消さないため）
+async function mutate(key,fn){
+  const cur=(await sGet(key))||[];
+  const next=fn(cur);
+  if(next===false) return false;
+  const ok=await sSet(key,next);
+  if(ok){ if(key==='sakai_crops')crops=next; else jobs=next; }
+  return ok;
+}
+
+// ---- 権限 ----
+const isGuest=()=>!!(sb&&!authUser);
+const isAdmin=()=>!!(sb&&authUser&&authUser.app_metadata&&authUser.app_metadata.role==='admin');
+function requireLogin(m){ if(isGuest()){alert(m||'この操作にはログインが必要です。');showAuth();return false} return true }
+function needRole(r,m){ if(!requireLogin())return false; if(profile.role!==r&&!isAdmin()){alert(m);return false} return true }
+
+// ---- 画像 ----
+let cropBlob=null;
+function compress(file){return new Promise((res,rej)=>{
+  const fr=new FileReader();fr.onerror=rej;
+  fr.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{
+    const m=900;let w=im.width,h=im.height;
+    if(w>h&&w>m){h=Math.round(h*m/w);w=m}else if(h>m){w=Math.round(w*m/h);h=m}
+    const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);
+    c.toBlob(b=>b?res(b):rej(),'image/jpeg',.6)};im.src=fr.result};
+  fr.readAsDataURL(file)})}
+$('cImg').addEventListener('change',async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{cropBlob=await compress(f);$('cImgPrev').innerHTML=`<img class="crop-img" style="width:120px" src="${URL.createObjectURL(cropBlob)}"> <button class="btn small outline" id="cImgDel" type="button">写真を外す</button>`;
+    $('cImgDel').onclick=()=>{cropBlob=null;$('cImgPrev').innerHTML=''}}catch(_){alert('画像を読み込めませんでした')}
+});
+async function uploadImage(blob){
+  const c=window.SAKAI_CLOUDINARY_CONFIG;if(!blob||!c||!c.cloudName)return null;
+  try{const f=new FormData();f.append('file',blob);f.append('upload_preset',c.uploadPreset);
+    const r=await fetch(`https://api.cloudinary.com/v1_1/${c.cloudName}/image/upload`,{method:'POST',body:f});
+    const d=await r.json();return r.ok?d.secure_url:null}catch(e){return null}
+}
+
+// ---- 起動・ログイン ----
+function showApp(){$('authScreen').style.display='none';$('appRoot').style.display=''}
+function showAuth(){$('authScreen').style.display='flex';$('appRoot').style.display='none'}
+let authMode='login',signupRole='farmer';
+function updateAuthTabs(){
+  $('authTabLogin').classList.toggle('sel',authMode==='login');$('authTabSignup').classList.toggle('sel',authMode==='signup');
+  $('signupFields').style.display=$('termsField').style.display=authMode==='signup'?'':'none';
+  $('authSubmit').textContent=authMode==='signup'?'新規登録する':'ログインする';$('authError').innerHTML='';
+}
+$('authTabLogin').onclick=()=>{authMode='login';updateAuthTabs()};
+$('authTabSignup').onclick=()=>{authMode='signup';updateAuthTabs()};
+document.querySelectorAll('#roleChoice button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#roleChoice button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');signupRole=b.dataset.r});
+$('authBack').onclick=showApp;
+$('loginBtn').onclick=showAuth;$('jobsGoLogin').onclick=showAuth;$('myGoLogin').onclick=showAuth;
+const openTerms=()=>$('termsModal').classList.add('active');
+$('openTerms').onclick=openTerms;$('myTerms').onclick=openTerms;
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).classList.remove('active'));
+
+$('authSubmit').onclick=async()=>{
+  const email=$('authEmail').value.trim(),password=$('authPassword').value,eb=$('authError');eb.innerHTML='';
+  const err=m=>eb.innerHTML=`<div class="notice err">${esc(m)}</div>`;
+  if(!email||!password)return err('メールアドレスとパスワードを入力してください');
+  const btn=$('authSubmit');btn.disabled=true;
+  try{
+    if(authMode==='signup'){
+      const name=$('authName').value.trim();
+      if(!name){err('表示する名前を入力してください');btn.disabled=false;return}
+      if(!$('authTerms').checked){err('利用規約に同意していただく必要があります');btn.disabled=false;return}
+      const {data,error}=await sb.auth.signUp({email,password,options:{data:{display_name:name,role_type:signupRole}}});
+      if(error)throw error;
+      if(data.session){authUser=data.user;showApp();await init()}
+      else eb.innerHTML='<div class="notice">確認メールを送信しました。メール内のリンクを開いてから、ログインしてください。</div>';
+    }else{
+      const {data,error}=await sb.auth.signInWithPassword({email,password});
+      if(error)throw error;authUser=data.user;showApp();await init();
+    }
+  }catch(e){err((e&&e.message)||'エラーが発生しました')}
+  btn.disabled=false;
+};
+
+async function boot(){
+  try{const c=window.SAKAI_SUPABASE_CONFIG;if(c&&c.url&&c.key&&typeof supabase!=='undefined')sb=supabase.createClient(c.url,c.key)}catch(e){console.warn(e)}
+  if(sb){try{const {data}=await sb.auth.getSession();if(data&&data.session)authUser=data.session.user}catch(e){}}
+  showApp();await init();
+  if(sb)sb.auth.onAuthStateChange(async(ev,s)=>{
+    if(ev==='SIGNED_IN'&&s&&s.user){if(authUser)return;authUser=s.user;showApp();await init()}
+    else if(ev==='SIGNED_OUT')location.reload();
+  });
+}
+async function init(){
+  if(sb&&authUser){try{const {data}=await sb.auth.getUser();if(data&&data.user)authUser=data.user}catch(e){}}
+  const m=(authUser&&authUser.user_metadata)||{};
+  profile={username:m.display_name||(authUser?'ユーザー'+Math.floor(Math.random()*900+100):null),role:m.role_type||null};
+  // 立場が未設定の既存アカウントは農家として扱います（マイページから変更はできません）
+  if(authUser&&!profile.role)profile.role='farmer';
+  $('modeBanner').innerHTML=sb?'':'<div class="notice" style="border-radius:0">共有データベースにつながっていません（この端末だけの保存になります）。</div>';
+  crops=(await sGet('sakai_crops'))||[];jobs=(await sGet('sakai_jobs'))||[];
+  renderAll();
+}
+function renderAll(){renderHeader();renderCrops();renderJobs();renderMy()}
+
+function renderHeader(){
+  $('userName').textContent=isGuest()||!authUser&&sb?'ようこそ、ゲストさん':`ようこそ、${profile.username}さん（${ROLES[profile.role]||'利用者'}${isAdmin()?'・管理者':''}）`;
+  $('loginBtn').style.display=isGuest()?'':'none';
+  $('cropPostCard').style.display=(!sb||profile.role==='farmer'||isAdmin())&&!isGuest()?'':'none';
+}
+
+// ---- タブ ----
+$('tabs').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-view]');if(!b)return;
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  document.querySelectorAll('section.view').forEach(s=>s.classList.remove('active'));
+  $('view-'+b.dataset.view).classList.add('active');
+  if(b.dataset.view==='jobs')refreshJobs();
+});
+async function refreshJobs(){jobs=(await sGet('sakai_jobs'))||[];crops=(await sGet('sakai_crops'))||crops;renderJobs();renderCrops();renderMy()}
+
+// ---- 作物（農家が登録） ----
+$('openCropModal').onclick=()=>{if(needRole('farmer','作物を登録できるのは農家だけです。'))$('cropModal').classList.add('active')};
+$('cropSearch').addEventListener('input',renderCrops);
+$('cSubmit').onclick=async()=>{
+  if(!needRole('farmer','作物を登録できるのは農家だけです。'))return;
+  const name=$('cName').value.trim(),qty=parseInt($('cQty').value,10),unit=$('cUnit').value.trim()||'個',
+    place=$('cPlace').value.trim(),contact=$('cContact').value.trim();
+  if(!name||!(qty>0)||!place||!contact){alert('作物名・数量・集荷場所・連絡先を入力してください');return}
+  const btn=$('cSubmit');btn.disabled=true;btn.textContent='登録中…';
+  let image=null;
+  if(cropBlob){image=await uploadImage(cropBlob);if(!image)alert('写真の保存に失敗したため、写真なしで登録します。')}
+  const crop={id:uid(),name,qty,unit,place,pickupTime:$('cTime').value.trim(),contact,note:$('cNote').value.trim(),image,author:profile.username,timestamp:Date.now()};
+  const ok=await mutate('sakai_crops',a=>a.concat([crop]));
+  btn.disabled=false;btn.textContent='登録する';
+  if(!ok)return;
+  ['cName','cQty','cUnit','cPlace','cTime','cContact','cNote'].forEach(i=>$(i).value='');
+  cropBlob=null;$('cImgPrev').innerHTML='';$('cropModal').classList.remove('active');renderCrops();renderMy();
+};
+function renderCrops(){
+  const q=$('cropSearch').value.trim().toLowerCase();
+  const items=crops.slice().sort((a,b)=>b.timestamp-a.timestamp).filter(c=>!q||q.split(/[\s　]+/).every(w=>[c.name,c.author,c.place,c.note].join(' ').toLowerCase().includes(w)));
+  if(!items.length){$('cropList').innerHTML='<div class="empty">'+(crops.length?'条件に合う作物がありません。':'まだ作物が登録されていません。')+'</div>';return}
+  $('cropList').innerHTML=items.map(c=>{
+    const mine=c.author===profile.username;
+    const sold=c.qty<=0;
+    return `<div class="card">
+      <span class="pill g">農家</span>${sold?'<span class="pill r">売り切れ</span>':`<span class="pill">残り ${c.qty}${esc(c.unit)}</span>`}
+      <h3>${esc(c.name)}</h3>
+      <div>${esc(c.note).replace(/\n/g,'<br>')}</div>
+      ${c.image?`<img class="crop-img" src="${esc(c.image)}">`:''}
+      <div class="meta">集荷場所：${esc(c.place)}${c.pickupTime?'（'+esc(c.pickupTime)+'）':''}／農家：${esc(c.author)}さん・${fmt(c.timestamp)}</div>
+      <div class="row">
+        ${!mine&&!sold?`<button class="btn small sun" data-order="${c.id}">注文する（飲食店）</button>`:''}
+        ${mine||isAdmin()?`<button class="btn small outline" data-delcrop="${c.id}">${mine?'取り下げる':'削除（管理者）'}</button>`:''}
+      </div></div>`}).join('');
+  document.querySelectorAll('[data-order]').forEach(b=>b.onclick=()=>openOrder(b.dataset.order));
+  document.querySelectorAll('[data-delcrop]').forEach(b=>b.onclick=async()=>{
+    const c=crops.find(x=>x.id===b.dataset.delcrop);
+    if(!c||!(c.author===profile.username||isAdmin()))return;
+    if(!confirm('この作物を取り下げますか？'))return;
+    await mutate('sakai_crops',a=>a.filter(x=>x.id!==c.id));renderCrops();renderMy();
+  });
+}
+
+// ---- 注文（飲食店）→ 配達募集 ----
+let orderCropId=null;
+function openOrder(id){
+  if(!needRole('restaurant','注文できるのは飲食店だけです。'))return;
+  const c=crops.find(x=>x.id===id);if(!c)return;
+  orderCropId=id;
+  $('oInfo').textContent=`${c.name}（残り ${c.qty}${c.unit}）／農家：${c.author}さん／集荷場所：${c.place}`;
+  $('oQty').value=1;$('oQty').max=c.qty;
+  ['oAddr','oContact','oFee','oNote'].forEach(i=>$(i).value='');
+  $('orderModal').classList.add('active');
+}
+$('oSubmit').onclick=async()=>{
+  const qty=parseInt($('oQty').value,10),addr=$('oAddr').value.trim(),contact=$('oContact').value.trim(),fee=parseInt($('oFee').value,10);
+  if(!(qty>0)||!addr||!contact||isNaN(fee)||fee<0){alert('数量・届け先・連絡先・配達料（0円以上）を入力してください');return}
+  const btn=$('oSubmit');btn.disabled=true;
+  let job=null;
+  const ok=await mutate('sakai_crops',a=>{
+    const c=a.find(x=>x.id===orderCropId);
+    if(!c||c.qty<qty){alert('在庫が足りません。数量を確認してください。');return false}
+    c.qty-=qty;
+    job={id:uid(),cropId:c.id,crop:c.name,qty,unit:c.unit,farmer:c.author,farmerContact:c.contact,pickupPlace:c.place,pickupTime:c.pickupTime||'',
+      restaurant:profile.username,restContact:contact,address:addr,fee,note:$('oNote').value.trim(),status:'open',driver:null,timestamp:Date.now()};
+    return a;
+  });
+  if(ok){
+    const ok2=await mutate('sakai_jobs',a=>a.concat([job]));
+    if(!ok2)await mutate('sakai_crops',a=>{const c=a.find(x=>x.id===orderCropId);if(c)c.qty+=qty;return a});
+    else alert('配達員を募集しました。「配達」タブで状況を確認できます。');
+  }
+  btn.disabled=false;$('orderModal').classList.remove('active');renderAll();
+};
+
+// ---- 配達 ----
+function jobCard(j,view){
+  const [st,cls]=STATUS[j.status];
+  const involved=[j.farmer,j.restaurant,j.driver].includes(profile.username)||isAdmin();
+  let acts='';
+  if(view==='open')acts=`<button class="btn small sun" data-accept="${j.id}">この配達を引き受ける</button>`;
+  if(view==='mine'&&j.status==='accepted')acts=`<button class="btn small" data-next="${j.id}" data-to="picked">農家から集荷した</button>`;
+  if(view==='mine'&&j.status==='picked')acts=`<button class="btn small" data-next="${j.id}" data-to="delivered">飲食店に届けた</button>`;
+  if(view==='mine'&&j.status==='accepted')acts+=` <button class="btn small outline" data-release="${j.id}">引き受けをやめる</button>`;
+  if(profile.username===j.restaurant&&j.status==='open')acts+=`<button class="btn small outline" data-cancel="${j.id}">注文を取り消す</button>`;
+  const step=['open','accepted','picked','delivered'].indexOf(j.status);
+  return `<div class="card">
+    <span class="pill ${cls}">${st}</span>
+    <h3>${esc(j.crop)}　${esc(j.qty)}${esc(j.unit)}</h3>
+    <div class="steps">${[0,1,2,3].map(i=>`<span class="${i<=step?'on':''}"></span>`).join('')}</div>
+    <div class="fee">配達料 ${Number(j.fee).toLocaleString()}円</div>
+    <div class="hint">配達員は、飲食店から配達料のみを受け取ります</div>
+    <div class="meta"><b>集荷</b>：${esc(j.pickupPlace)}${j.pickupTime?'（'+esc(j.pickupTime)+'）':''}（農家：${esc(j.farmer)}さん）</div>
+    <div class="meta"><b>届け先</b>：${esc(j.address)}（飲食店：${esc(j.restaurant)}さん）</div>
+    ${j.driver?`<div class="meta"><b>配達員</b>：${esc(j.driver)}さん</div>`:''}
+    ${j.note?`<div class="meta">備考：${esc(j.note)}</div>`:''}
+    ${involved&&(j.driver||profile.username!==j.driver)&&j.status!=='open'||profile.username===j.restaurant||profile.username===j.farmer?`<div class="meta">連絡先　農家：${esc(j.farmerContact)}／飲食店：${esc(j.restContact)}</div>`:''}
+    <div class="meta">${fmt(j.timestamp)}</div>
+    <div class="row">${acts}</div></div>`;
+}
+function renderJobs(){
+  const guest=isGuest();
+  $('jobsLogin').style.display=guest?'':'none';
+  if(guest){$('jobsBody').innerHTML='';return}
+  const me=profile.username,role=profile.role;
+  const sort=a=>a.slice().sort((x,y)=>y.timestamp-x.timestamp);
+  let html='';
+  const sec=(t,list,view,emptyMsg)=>`<h3 style="margin-top:8px">${t}</h3>`+(list.length?list.map(j=>jobCard(j,view)).join(''):`<p class="hint">${emptyMsg}</p>`);
+  if(role==='driver'||isAdmin()){
+    html+=sec('募集中の配達',sort(jobs.filter(j=>j.status==='open')),role==='driver'?'open':'view','いま募集中の配達はありません。');
+    html+=sec('あなたの配達',sort(jobs.filter(j=>j.driver===me)),'mine','引き受けた配達はありません。');
+  }
+  if(role==='restaurant')html+=sec('あなたの注文',sort(jobs.filter(j=>j.restaurant===me)),'view','まだ注文がありません。「作物」タブから注文できます。');
+  if(role==='farmer')html+=sec('あなたの作物の注文',sort(jobs.filter(j=>j.farmer===me)),'view','まだ注文はありません。');
+  $('jobsBody').innerHTML=html;
+  document.querySelectorAll('[data-accept]').forEach(b=>b.onclick=()=>setJob(b.dataset.accept,j=>{
+    if(j.status!=='open'){alert('この配達はすでに他の配達員が引き受けました。');return false}
+    j.status='accepted';j.driver=me;}));
+  document.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>setJob(b.dataset.next,j=>{
+    if(j.driver!==me)return false;j.status=b.dataset.to;}));
+  document.querySelectorAll('[data-release]').forEach(b=>b.onclick=()=>{
+    if(!confirm('引き受けをやめますか？（募集中に戻ります）'))return;
+    setJob(b.dataset.release,j=>{if(j.driver!==me||j.status!=='accepted')return false;j.status='open';j.driver=null;})});
+  document.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=async()=>{
+    if(!confirm('注文を取り消しますか？'))return;
+    let j0=null;
+    const ok=await mutate('sakai_jobs',a=>{j0=a.find(x=>x.id===b.dataset.cancel);if(!j0||j0.restaurant!==me||j0.status!=='open'){alert('取り消せません（すでに配達員が決まっています）。');return false}return a.filter(x=>x.id!==j0.id)});
+    if(ok)await mutate('sakai_crops',a=>{const c=a.find(x=>x.id===j0.cropId);if(c)c.qty+=j0.qty;return a});
+    renderAll();
+  });
+}
+async function setJob(id,fn){
+  if(!needRole('driver','この操作ができるのは配達員だけです。'))return;
+  await mutate('sakai_jobs',a=>{const j=a.find(x=>x.id===id);if(!j)return false;return fn(j)===false?false:a});
+  renderAll();
+}
+
+// ---- マイページ ----
+function renderMy(){
+  const guest=isGuest();
+  $('myLogin').style.display=guest?'':'none';$('myBody').style.display=guest?'none':'';
+  if(guest)return;
+  $('myName').textContent=profile.username;$('myRole').textContent=ROLES[profile.role]||'';
+  $('myNameInput').value=profile.username||'';
+  $('logoutBtn').style.display=sb&&authUser?'':'none';
+  const me=profile.username;let s='';
+  if(profile.role==='farmer')s=`<h3>あなたの実績</h3><p>登録した作物：${crops.filter(c=>c.author===me).length}件／受けた注文：${jobs.filter(j=>j.farmer===me).length}件</p>`;
+  if(profile.role==='restaurant')s=`<h3>あなたの実績</h3><p>注文した数：${jobs.filter(j=>j.restaurant===me).length}件</p>`;
+  if(profile.role==='driver'){
+    const done=jobs.filter(j=>j.driver===me&&j.status==='delivered');
+    s=`<h3>あなたの実績</h3><p>完了した配達：${done.length}件／配達料の合計：${done.reduce((t,j)=>t+Number(j.fee),0).toLocaleString()}円</p><p class="hint">配達料は飲食店から直接受け取ります。</p>`;
+  }
+  $('myStats').innerHTML=s;
+}
+$('myNameSave').onclick=async()=>{
+  const n=$('myNameInput').value.trim();if(!n){alert('名前を入力してください');return}
+  if(sb&&authUser){try{await sb.auth.updateUser({data:{display_name:n}})}catch(e){}}
+  alert('名前を変更しました。これまでの登録・注文は元の名前のままです。');
+  profile.username=n;renderAll();
+};
+$('logoutBtn').onclick=async()=>{if(confirm('ログアウトしますか？')){try{await sb.auth.signOut()}catch(e){}}};
+
+boot();
+})();
+</script>
+</div>
+
+
+</body></html>
